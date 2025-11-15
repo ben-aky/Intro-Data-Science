@@ -1,0 +1,115 @@
+---
+title: "Coding Assignment 3"
+format: html
+---
+
+In this homework assignment, we are once again going to be exploring the correlates of democracy with V-Dem. But this time we are going to do so in the context of regression analysis. 
+
+## Step 1: Load the data (8 pts.)
+
+Using `fetchdem` from `vdemlite`, select the `v2x_regime` variable, a continuous measure of democracy like `v2x_polyarchy`, and at least three variables that you believe correlate with democracy for all countries and one year of your choosing. Use `mutate()` to transform `v2x_regime` into a binary variable that indicates whether a country is a democracy or not (I have provided this part of the code for you).
+
+
+```{r}
+library(vdemlite)
+library(tidyverse)
+
+vdem_data <- fetchdem(indicators = c("v2x_regime", "v2x_polyarchy", "v2mecenefm", "v2clgencl", "v2peedueq"),
+                      start_year = 2005, end_year = 2005) |>
+  mutate(regime_dummy = ifelse(v2x_regime >= 2, 1, 0))
+
+glimpse(vdem_data)
+```
+
+## Step 2: Hypotheses (8 pts.)
+
+Talk about why you chose the indicators you did and why you think your independent variables should be related to democracy. 
+
+I chose the following 3 indicators:
+v2mecenefm= government media censorship 
+v2clgencl= gender equality for civil liberties
+v2peedueq= educational equality
+
+Authortarian leaders tend to censor the press in order to keep control over of their people by manipulating narratives within the country. The other two indicators asses the educational and gender equality in each nation. Democractic nations have to appease all people in their country regardless of gender or economic background, so testing how each nation treats different groups can provide insight into how much each representation their citizens get from their leaders.
+
+## Step 3: Run a bivariate linear regression model (12 pts.)
+
+Run a bivariate linear regression model with your selected *continuous* measure of democracy as the dependent variable and one of your selected predictors as the independent variable. Use the `lm()` function to run the model and the `summary()` function to view the results. 
+
+```{r}
+model1 <-  lm(v2x_polyarchy ~ v2mecenefm, data = vdem_data) 
+
+summary(model1)
+```
+
+## Step 4: Interpret the results (12 pts.)
+
+Interpret the results of the regression model. What is the coefficient on the predictor variable? What does this coefficient tell you about the relationship between the predictor and democracy? Is the relationship stastically significant? How about the constant (intercept term)?
+
+The relationship between the predictor (media censorship) and democracy is statistically significant. The coefficient on the predictor is 0.155 and the constant is 0.404. This tells us that a positive value of the independant variable will increase our democracy estimate, while a negative value decreases the estimate.
+
+## Step 5: Run a Multiple Linear Regression Model (12 pts.)
+
+Run a multiple linear regression model with your selected *continous* measure of democracy as the dependent variable and at least three of your selected predictors as the independent variables. Use the `lm()` function to run the model and the `summary()` function to view the results. 
+
+```{r}
+model2 <-  lm(v2x_polyarchy ~ v2mecenefm + v2clgencl + v2peedueq, data = vdem_data) 
+
+summary(model2)
+```
+
+## Step 6: Interpret the Results of Your Multiple Regression (12 pts.)
+
+Interpret the results of the multiple regression model. What is the coefficient on each of the predictor variables? What does this coefficient tell you about the relationship between the predictors and democracy? Are the relationships statistically significant? How would you interpret the constant (intercept term)?
+
+The media censorhsip coefficient is 0.133, gender equality is 0.054, educational equality is 0.003. This suggests positive coerrelation between the predictors and democracy. Although, the educational equality coefficient is not statistically significant, so the coerrelation is likely a result of randomness. The intercept is 0.346, this is the average democracy score when all other variables are equal to 0.
+
+## Step 7: Run a Multiple Logistic Regression (12 pts.)
+
+Using your *dichotomous* measure of regime type (democratic or not) as the dependent variable, run a multiple logistic regression model with your three predictors. Use the `glm()` function to run the model and the `summary()` function to view the results. 
+
+```{r}
+model3 <- glm(regime_dummy ~ v2mecenefm + v2clgencl + v2peedueq, data = vdem_data, family = "binomial")
+
+summary(model3)
+```
+
+
+## Step 8: Interpret the Results of Your Logistic Regression (12 pts.)
+
+Interpret the results of the logistic regression model. Interpret the direction and significance of each predictor. Exponentiate the coefficient of one of the predictors and interpret the substantive effects.
+
+The coefficient for media censorship is 2.645 and is statistically significant. The other two predictors are not statistically significant, with gender equality having a coefficient of 0.501 and the coefficient for educational equality being 0.229. This suggests media censorship is the only accurate predictor when using logistic regression.
+
+**You must exponentiate one of the coefficients using exp() and interpret it as an odds ratio. This is required per the instructions. You missed that part.**
+
+## Step 9: Calculate predicted probabilities (12 pts.)
+
+Use the `marginaleffects` package to give the predicted probabilities of regime transition (e.g. becoming a democracy) for three countries in your dataset. Display the results using the `tidy()` function from the `broom` package.
+
+```{r}
+library(marginaleffects)
+library(broom)
+selected_countries <- vdem_data |>
+  filter(
+    country_name %in% c("United States of America", "Colombia", "Belarus"))
+marg_effect <- predictions(model3, newdata = selected_countries)
+tidy(marg_effect) |>
+  select(country_name, estimate, p.value, conf.low, conf.high)
+```
+
+**Great use of code and presentation, but you need 1–2 sentences interpreting those probabilities**
+
+## Extra Credit (3 pts)
+
+Use `ggplot2` to visualize your predictions with a coefficient plot.
+
+::: {.callout-important}
+## Submission Instructions
+
+After rendering your document, export your project folder and submit it on Blackboard. You will find the link to the Coding Assignment one submission portal under the Assignments link. There is a screen capture video in the Discord server that will help you understand how to do this.
+:::
+
+
+
+
